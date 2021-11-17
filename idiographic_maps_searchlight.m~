@@ -1,0 +1,37 @@
+function idiographic_maps_searchlight(id, map1, map2)
+
+wdir = cdtodrive;
+dissdir = [wdir '/Users/Thomas/dissertation'];
+cd(dissdir)
+load('masks/volInfo.mat')
+phys = {'sbp' 'hr'};
+
+%% load data
+switch map1
+    case 'sbp'
+        load(sprintf('predict/idiographic/lassopcr/sbp/%d_lassopcr_sbp.mat', id));
+        tmp1 = out.weight_obj;
+        if all(tmp1.dat == 0);    
+            disp('map contains all zeros'); return; 
+        end
+    case 'hr'
+        load(sprintf('predict/idiographic/lassopcr/hr/%d_lassopcr_hr.mat', id));
+        tmp2 = out.weight_obj;
+        if all(tmp2.dat == 0)
+            disp('map contains all zeros'); return; 
+        end
+    case 'eisen'
+        tmp1 = fmri_data('signatures/ANS_Eisenbarth_JN_2016_HR_pattern.img'), 'masks/grey.nii')
+        
+
+tmp1.volInfo = volInfo;
+tmp2.volInfo = volInfo;
+
+%% run searchlight
+t = tic;
+[searchlight_r, searchlight_dat] = searchlight_correlation(tmp1, tmp2, 5); % 5 voxel radius
+toc(t)
+
+%% write NII image
+write(searchlight_dat, 'overwrite', 'fname', ...
+    sprintf('predict/idiographic/lassopcr/sbp_hr_searchlight/%d.nii', id));
